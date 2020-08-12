@@ -1,0 +1,15 @@
+H=180;
+D=20;
+thick=3;//Wandstaerke
+funH=20;//Trichterhoehe
+$fn=60;
+difference(){
+union(){
+cylinder(d1=3*D,d2=D,h=funH);
+translate([0,0,funH])cylinder(d=D,h=H);
+}
+translate([0,0,-0.2]){
+cylinder(d1=3*D-thick,d2=D-thick,h=funH+1);
+translate([0,0,funH])cylinder(d=D-thick,h=H+1);
+}
+}
