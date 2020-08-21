@@ -1,7 +1,7 @@
 $fn=60;
 difference(){
 union(){
-translate([0,0,15])cylinder(d1=9.5,d2=10,h=12);
+translate([0,0,15])cylinder(d1=9.75,d2=10.5,h=12);
     translate([0,0,14])cylinder(d1=8,d2=5,h=20);
     translate([0,0,31])cylinder(d1=5,d2=4.3,h=13);
     //*
