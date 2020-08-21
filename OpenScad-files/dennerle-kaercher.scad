@@ -1,0 +1,22 @@
+$fn=60;
+difference(){
+union(){
+translate([0,0,15])cylinder(d1=9.5,d2=10,h=12);
+    translate([0,0,14])cylinder(d1=8,d2=5,h=20);
+    translate([0,0,31])cylinder(d1=5,d2=4.3,h=13);
+    //*
+    translate([0,0,35])cylinder(d2=5.1,d1=5.4,h=0.4);
+    translate([0,0,37])cylinder(d2=5.1,d1=5.4,h=0.4);
+    translate([0,0,39])cylinder(d2=5.1,d1=5.4,h=0.4);
+    translate([0,0,41])cylinder(d2=5.1,d1=5.4,h=0.4);/*
+    translate([0,0,56])cylinder(d1=5.7,d2=6.0,h=0.4);
+    translate([0,0,58])cylinder(d1=5.5,d2=5.8,h=0.4);
+    translate([0,0,60])cylinder(d1=5.3,d2=5.6,h=0.4);
+    translate([0,0,62])cylinder(d1=5.1,d2=5.4,h=0.4);
+    */
+}
+    translate([0,0,13.9])cylinder(d=8,h=12);
+
+//color("teal")translate([0,0,-1])cylinder(d=11,h=26);
+translate([0,0,14])cylinder(d=3,h=46);
+}
