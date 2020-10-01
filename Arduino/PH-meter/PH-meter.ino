@@ -42,8 +42,6 @@ const int T2pin = A2;
 #define b1    3950.0f//temperature coeffitient for ntc1
 #define b2    3435.0f//temperature coeffitient for ntc2
 
-float R1 =  0.0f;
-float R2 =  0.0f;
 float steigung = -1.0f;
 float achsenabschnitt = 0.0f;
 
@@ -78,9 +76,6 @@ OneButton okButton  (11, true);
 bool yes=false;//OK button
 bool info=true;//verbose extra info on display
 bool measureEC=true;//enable EC measurement
-
-uint8_t numCalibSamples = 0;
-uint32_t calibAvg = 0;
 
 void fillBuffer();
 void getFloatingAvg();
@@ -117,7 +112,7 @@ void regression(bool store){
   }
 }
 
-void calib_pH4(){
+void calibComm(int ph){
   yes=false;
   lcd.clear();
   //lcd.print("01234567890123456789  //20 Zeichen
@@ -127,7 +122,9 @@ void calib_pH4(){
   lcd.print("demin. H2O sp");lcd.printByte(245);
   lcd.print("hlen");
   lcd.setCursor(0, 2);  
-  lcd.print("und in pH4 Lsg.");
+  lcd.print("und in pH");
+  lcd.print(ph);
+  lcd.print("Lsg.");
   lcd.setCursor(0, 3);  
   lcd.print("eintauchen [OK]");
   while (!yes) {
@@ -150,81 +147,22 @@ void calib_pH4(){
     okButton.tick();
   }
   yes=false;
+}
+
+void calib_pH4(){
+  calibComm(4);
   xph4=sensorVoltage;
   regression(true);
 }
 
 void calib_pH7(){
-  yes=false;
-  lcd.clear();
-  //lcd.print("01234567890123456789
-  lcd.setCursor(0, 0);  
-  lcd.print(F("Bitte pH-Sonde mit"));
-  lcd.setCursor(0, 1);  
-  lcd.print(F("demin. H2O sp"));lcd.printByte(245);
-  lcd.print(F("hlen"));
-  lcd.setCursor(0, 2);  
-  lcd.print(F("und in pH6.86 Lsg."));
-  lcd.setCursor(0, 3);  
-  lcd.print(F("eintauchen [OK]"));
-  while (!yes) {
-    fillBuffer();
-    menuButton.tick();
-    okButton.tick();
-  }
-  yes=false;
-  while (!yes) {
-    sampling();
-    sensorVoltage = (float)avgValue * VOLTAGE / VOLTAGE_REF;
-    lcd.clear();
-    lcd.setCursor(0, 0);  
-    lcd.print(F("Volt = "));
-    lcd.print(sensorVoltage,3);
-    lcd.setCursor(0, 1);  
-    lcd.print(F("[OK] "));
-    delay(200);
-    menuButton.tick();
-    okButton.tick();
-  }
-  yes=false;
+  calibComm(7);//6.86
   xph7=sensorVoltage;
   regression(true);
 }
 
-
 void calib_pH9(){
-  yes=false;
-  lcd.clear();
-  //lcd.print("01234567890123456789
-  lcd.setCursor(0, 0);  
-  lcd.print(F("Bitte pH-Sonde mit"));
-  lcd.setCursor(0, 1);  
-  lcd.print(F("demin. H2O sp"));lcd.printByte(245);
-  lcd.print(F("hlen"));
-  lcd.setCursor(0, 2);  
-  lcd.print(F("und in pH9 Lsg."));
-  lcd.setCursor(0, 3);  
-  lcd.print(F("eintauchen [OK]"));
-  while (!yes) {
-    fillBuffer();
-    menuButton.tick();
-    okButton.tick();
-  }
-  yes=false;
-  while (!yes) {
-    sampling();
-    sensorVoltage = (float)avgValue * VOLTAGE / VOLTAGE_REF;
-    lcd.clear();
-    lcd.setCursor(0, 0);  
-    lcd.print("Volt = ");
-    lcd.print(sensorVoltage,3);
-    lcd.setCursor(0, 1);  
-    lcd.print("[OK] ");
-    delay(200);
-    menuButton.tick();
-    okButton.tick();
-  }
-  yes=false;
+  calibComm(9);
   xph9=sensorVoltage;
   regression(true);
 }
@@ -328,6 +266,12 @@ void doMenuClick(){
   menu%=MENUENTRYS;
 }
 
+void doMenuDClick(){
+  menu+=MENUENTRYS;//this way menu never gets negative
+  menu--;  
+  menu%=MENUENTRYS;
+}
+
 void doOKClick(){
   yes=true;  
 }
@@ -360,12 +304,13 @@ void setup() {
   lcd.clear();
   menuButton.attachClick(doMenuClick);
   okButton.attachClick(doOKClick);
+  menuButton.attachDoubleClick(doMenuDClick);
 }
 
 float conductivity(){
   float rs=2200*2;
   int a6=0,a7=0;
-  unsigned long diff1=0,diff2=0;
+  unsigned long diff1=0;
   for (int i=0; i<100; i++){
     digitalWrite(ECA, HIGH);
     digitalWrite(ECB, LOW);
@@ -408,8 +353,10 @@ void loop() {
     if (menu!=amenu) lcd.clear();
     samplingT1();
     samplingT2();
-    R1=(1023.0/(1023-((float)avgValueT1)) - 1.0) * R1a ;
-    R2=(1023.0/(1023-((float)avgValueT2)) - 1.0) * R2a;
+    //float R1 =  0.0f;
+    //float R2 =  0.0f;
+    float R1=(1023.0/(1023-((float)avgValueT1)) - 1.0) * R1a ;
+    float R2=(1023.0/(1023-((float)avgValueT2)) - 1.0) * R2a;
     lcd.setCursor(0, 0);
     lcd.print(F("pH: "));
     lcd.print(phValue);
