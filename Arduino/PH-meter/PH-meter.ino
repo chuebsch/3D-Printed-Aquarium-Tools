@@ -25,14 +25,14 @@ LiquidCrystal_I2C lcd(0x27, 20, 4); // set the LCD address to 0x27 for a 20 char
 #define DELAY_BETWEEN_SAMPLES   20 //ms
 #define VOLTAGE                 5  //V
 #define VOLTAGE_REF             1023
-#define MENUENTRYS 7
-#define ECA 4
-#define ECB 5
-#define FANPIN 6
-const size_t sf =sizeof(float);
+#define MENUENTRYS              7
+#define ECA                     4
+#define ECB                     5
+#define FANPIN                  6
+const byte sf =(byte) sizeof(float);
 
-const int T1pin = A0;
-const int T2pin = A2;
+const byte T1pin = A0;
+const byte T2pin = A2;
 
 
 #define R251  100000.0f//NTC1 R at 25C
@@ -67,15 +67,15 @@ bool firstSamplingT1 = true;
 bool firstSamplingT2 = true;
 float sensorVoltage;
 float phValue;
-int menu=0;
-int amenu=0; 
-int fanspeed=0;
+byte menu             = 0;
+byte amenu            = 0; 
+uint16_t fanspeed         = 0;
 OneButton menuButton(12, true);
 OneButton okButton  (11, true);
 
 bool yes=false;//OK button
 bool info=true;//verbose extra info on display
-bool measureEC=true;//enable EC measurement
+bool measureEC=false;//enable EC measurement
 
 void fillBuffer();
 void getFloatingAvg();
@@ -88,8 +88,11 @@ void regression(bool store){
   float sy  = yph4 + yph7 + yph9;// Summe y
   //float sy2=;
   float sxy =  xph4 * yph4 +xph7 * yph7 + xph9 * yph9;//Summe x*y
-  steigung = (3 * sxy - sx * sy) / (3 * sx2 - sx * sx);
-  achsenabschnitt = (sx2 * sy - sx * sxy) / (3 * sx2 - sx * sx);
+  float nenner =  (3 * sx2 - sx * sx);
+  if (nenner!=0.0f){ 
+  steigung = (3 * sxy - sx * sy) / nenner;
+  achsenabschnitt = (sx2 * sy - sx * sxy) / nenner;
+  }else{ steigung = 1.0; achsenabschnitt = 0;}
   lcd.clear();
   lcd.setCursor(0, 0);    
   lcd.print("m * x + b ="); 
@@ -99,9 +102,8 @@ void regression(bool store){
   lcd.print(achsenabschnitt,3);  
   lcd.setCursor(0, 3);  
   lcd.print("[OK]");
-  while (!yes) {
-    delay(1);    
-    menuButton.tick();
+  while ((!yes)&&(store)) {
+    delay(10);  
     okButton.tick();
   }
   yes=false;
@@ -109,7 +111,9 @@ void regression(bool store){
     EEPROM.put(sf * 0, xph4);  
     EEPROM.put(sf * 1, xph7);
     EEPROM.put(sf * 2, xph9);
-  }
+  }else{
+    delay(1000);
+    }
 }
 
 void calibComm(int ph){
@@ -129,7 +133,6 @@ void calibComm(int ph){
   lcd.print("eintauchen [OK]");
   while (!yes) {
     fillBuffer();
-    menuButton.tick();
     okButton.tick();
   }
   yes=false;
@@ -143,7 +146,6 @@ void calibComm(int ph){
     lcd.setCursor(0, 1);  
     lcd.print("[OK] ");
     delay(200);
-    menuButton.tick();
     okButton.tick();
   }
   yes=false;
@@ -276,7 +278,18 @@ void doOKClick(){
   yes=true;  
 }
 
+
+// setup
+
 void setup() {
+  lcd.init();                      // initialize the lcd
+  lcd.init();
+  lcd.backlight();//can't see without
+  lcd.noAutoscroll();
+  lcd.clear();
+  menuButton.attachClick(doMenuClick);
+  okButton.attachClick(doOKClick);
+  menuButton.attachDoubleClick(doMenuDClick);
 #ifdef DEBUG  
   Serial.begin(9600);
 #endif
@@ -286,10 +299,6 @@ void setup() {
   EEPROM.get(sf * 2, xph9);
   regression(false);
   //analogReference(EXTERNAL);// use this if you use AREF pin
-  lcd.init();                      // initialize the lcd
-  lcd.init();
-  lcd.backlight();//can't see without
-  lcd.noAutoscroll();
   uint8_t temp[8]  = {0x4,  0xa,  0xa, 0xa, 0xa, 0x11, 0x11, 0xe};
   uint8_t deg[8]   = {0xc, 0x12, 0x12, 0xc,  0x0,  0x0, 0x0, 0x0};
   uint8_t copy[8]  = {0xc, 0x10, 0x10, 0xc,  0x0,  0x5, 0x7, 0x5};
@@ -302,9 +311,6 @@ void setup() {
   digitalWrite(ECA, LOW);
   digitalWrite(ECB, LOW);
   lcd.clear();
-  menuButton.attachClick(doMenuClick);
-  okButton.attachClick(doOKClick);
-  menuButton.attachDoubleClick(doMenuDClick);
 }
 
 float conductivity(){
@@ -314,7 +320,7 @@ float conductivity(){
   for (int i=0; i<100; i++){
     digitalWrite(ECA, HIGH);
     digitalWrite(ECB, LOW);
-    delayMicroseconds(75);//50mus
+    delayMicroseconds(150);//50mus
     a6 = analogRead(A6);//100mus
     a7 = analogRead(A7);//100mus
     diff1+=abs(a6-a7);
@@ -322,7 +328,7 @@ float conductivity(){
 
     digitalWrite(ECA, LOW);
     digitalWrite(ECB, HIGH);
-    delayMicroseconds(75);//50mus
+    delayMicroseconds(150);//50mus
     a6 = analogRead(A6);//100mus
     a7 = analogRead(A7);//100mus
     diff1+=abs(a6-a7);
@@ -331,8 +337,12 @@ float conductivity(){
   float r1 = (1023.0/(1023-((float)diff1/200.0)) - 1.0) *  rs;    
   digitalWrite(ECA, LOW);
   digitalWrite(ECB, LOW);
-  return 1/r1 * 1000000;
+  digitalWrite(ECA, HIGH);
+  digitalWrite(ECB, HIGH);
+  return (1/r1 * 1000000)*40.8;
 }
+
+//loop
 
 void loop() {
   unsigned long nowis = millis();
@@ -341,7 +351,7 @@ void loop() {
   menuButton.tick();
   okButton.tick();
   if (menu==0)if ((nowis - nextDispTime) > 500ul) {
-
+    digitalWrite(13,!digitalRead(13));
     sampling();
     sensorVoltage = (float)avgValue * VOLTAGE / VOLTAGE_REF;
     phValue = steigung * sensorVoltage + achsenabschnitt;
@@ -364,6 +374,7 @@ void loop() {
     if (info) 
     {
       lcd.print(avgValue);
+      lcd.print(F(" "));
       lcd.setCursor(0, 1);
       lcd.print((R1 > 1000) ? ((R1 > 1000000) ? 0.000001 * R1 : 0.001 * R1) : R1, 1);
       lcd.print((R1 > 1000) ? ((R1 > 1000000) ? "M" : "k") : "");  
@@ -395,7 +406,7 @@ void loop() {
     if (measureEC){
       lcd.setCursor(0, 2);  
       float ec=conductivity();
-      if (ec>250){
+      if (ec>0){
         lcd.print(ec);
         lcd.printByte(228);
         lcd.print("S");  
@@ -435,11 +446,11 @@ void loop() {
       lcd.setCursor(0, 2); 
       lcd.print((menu==5)?">":" ");
       lcd.print(F("Debug info: "));
-      lcd.print((info)?"[yes]":"[no]");
+      lcd.print((info)?"[yes]":"[no] ");
       lcd.setCursor(0, 3); 
       lcd.print((menu==6)?">":" ");
       lcd.print(F("Enable EC: "));
-      lcd.print((measureEC)?"[yes]":"[no]");
+      lcd.print((measureEC)?"[yes]":"[no] ");
     }//*/
     if(yes){
       switch (menu){
@@ -462,9 +473,12 @@ void loop() {
       yes=false;
     }
     analogWrite(FANPIN,fanspeed);
-    lcd.print(F(" "));
+    if (menu<5){
+    lcd.setCursor(15, 3); 
     lcd.print(fanspeed/2.55, 0); 
-    lcd.print("% ");
+    lcd.print("% ");}
+    
   }
   amenu=menu;
+  
 }
