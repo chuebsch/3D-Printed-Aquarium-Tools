@@ -22,8 +22,8 @@ LiquidCrystal_I2C lcd(0x27, 20, 4); // set the LCD address to 0x27 for a 20 char
 //#define DEBUG 1
 
 #define PH_SENSOR_PIN           A1
-#define AVG_ARRAY_SIZE          19
-#define DELAY_BETWEEN_SAMPLES   20 //ms
+#define AVG_ARRAY_SIZE          63
+#define DELAY_BETWEEN_SAMPLES   23 //ms
 #define VOLTAGE                 5  //V
 #define VOLTAGE_REF             1023
 #define MENUENTRYS              9
@@ -82,6 +82,7 @@ OneButton menuButton(12, true);
 OneButton okButton  (11, true);
 unsigned long nextDispTime = 0ul;
 unsigned long nextECTime = 0ul;
+unsigned long mimapause = 0ul;
 
 bool yes =            false;//OK button
 bool info =           true;//verbose extra info on display
@@ -95,6 +96,7 @@ void sampling();
 
 ////////////////////////////////////////////////////////////////////////////////////////
 void regression(bool store){
+  yes=false;
   float sx2 = xph4 * xph4 + xph7 * xph7 + xph9 * xph9;//Summe x^2
   float sx  = xph4 + xph7 + xph9;// Summe x
   float sy  = yph4 + yph7 + yph9;// Summe y
@@ -142,9 +144,10 @@ void calibComm(int ph){
   lcd.print(ph);
   lcd.print("Lsg.");
   lcd.setCursor(0, 3);  
-  lcd.print("eintauchen [OK]");
+  lcd.print("eintauchen [OK]");  
+  fillBuffer();
   while (!yes) {
-    fillBuffer();
+    sampling();
     okButton.tick();
   }
   yes=false;
@@ -184,20 +187,26 @@ void calib_pH9(){
 
 //fill whole floating average buffer, it is used only at start (empty buffer) 
 void fillBuffer(){
+  lcd.setCursor(0, 0);    
+  lcd.print("fillBuffer"); 
   for (int i = 0; i < AVG_ARRAY_SIZE; i++) {
     analogValBuf[i] = analogRead(PH_SENSOR_PIN);
     delay(DELAY_BETWEEN_SAMPLES);
   }
 }
 
-void fillBufferT1(){
+void fillBufferT1(){  
+  lcd.setCursor(0, 1);    
+  lcd.print("fillBufferT1"); 
   for (int i = 0; i < AVG_ARRAY_SIZE; i++) {
     analogValBufT1[i] = analogRead(T1pin);
     delay(DELAY_BETWEEN_SAMPLES);
   }
 }
 
-void fillBufferT2(){
+void fillBufferT2(){  
+  lcd.setCursor(0, 2);    
+  lcd.print("fillBufferT2"); 
   for (int i = 0; i < AVG_ARRAY_SIZE; i++) {
     analogValBufT2[i] = analogRead(T2pin);
     delay(DELAY_BETWEEN_SAMPLES);
@@ -285,12 +294,14 @@ void samplingT2(){
   }
 }
 
-void doMenuClick(){
+void doMenuClick(){  
+  yes=false;
   menu++;
   menu%=MENUENTRYS;
 }
 
-void doMenuLongClick(){
+void doMenuLongClick(){  
+  yes=false;
   lcd_backlight=!lcd_backlight;
   if (lcd_backlight) lcd.backlight();
   else {
@@ -299,7 +310,8 @@ void doMenuLongClick(){
   }
 }
 
-void doMenuDClick(){
+void doMenuDClick(){  
+  yes=false;
   menu+=MENUENTRYS;//this way menu never gets negative
   menu--;  
   menu%=MENUENTRYS;
@@ -313,6 +325,7 @@ void doOKDClick(){
   if (menu==0) {
     measureEC=!measureEC; 
     nextECTime = 0ul;
+    yes=false;
 }
 }
 
@@ -322,6 +335,7 @@ void doOKLongClick(){
   lcd.clear();
   menu=0;
   nextDispTime = 0ul;
+  yes=false;
 }
 // setup
 
@@ -394,7 +408,7 @@ float conductivity(){
   digitalWrite(ECB, LOW);
   digitalWrite(RELAIS1, HIGH);
   digitalWrite(RELAIS2, HIGH);
-  return (1/r1 * 1000000)*40.8;
+  return (1/r1 * 1000000);
 }
 
 //loop
@@ -407,11 +421,12 @@ void loop() {
   if (menu==0)if ((nowis - nextDispTime) > 500ul) {
     digitalWrite(13,!digitalRead(13));
     sampling();
+    mimapause++;
     sensorVoltage = (float)avgValue * VOLTAGE / VOLTAGE_REF;
     phValue = steigung * sensorVoltage + achsenabschnitt;
     float sig=sigma();
     sig*= abs(steigung * VOLTAGE / VOLTAGE_REF);
-    int8_t dig = min(-1*floor(log(3*sig)/log(10)),1);
+    int8_t dig = min(max(-1*floor(log(2.5*sig)/log(10)),1),2);
 #ifdef DEBUG  
     Serial.print(F("pH value: "));
     Serial.println(phValue);
@@ -455,8 +470,11 @@ void loop() {
     lcd.print("C");  
     lcd.print("   ");
     if (!measureEC){
+      if ((blowFish)||(fanspeed!=0)) mimapause=0;
+      if ((mimapause>AVG_ARRAY_SIZE)&&((!blowFish)||(fanspeed==0))){
       pHmin=min(pHmin,phValue);
       pHmax=max(pHmax,phValue);
+      }
       Tmin=min((t1+t2*5)/6.0,Tmin);
       Tmax=max((t1+t2*5)/6.0,Tmax);
       if (!info){
@@ -572,7 +590,7 @@ void loop() {
       //analogWrite(6,fanspeed);
       yes=false;
     }
-    analogWrite(FANPIN,fanspeed);
+    analogWrite(FANPIN,(blowFish)?fanspeed:0);
     if (menu<5){
     lcd.setCursor(15, 3); 
     lcd.print(fanspeed/2.55, 0); 
