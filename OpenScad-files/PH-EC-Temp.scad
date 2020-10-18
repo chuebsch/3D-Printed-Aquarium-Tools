@@ -86,7 +86,7 @@ cube([90,70,1.7]);
 difference(){
     union(){
         difference(){
-translate([-80+3.5,35.6,43])cube([15,8.7,12]);
+translate([-80+3.5,30.6,43])cube([15,18.7,12]);
 translate([-80+3,40,47])dcjack();   
 }
         translate([ 0,12,55])cube([160,96,3],center=true);
@@ -98,39 +98,50 @@ translate([-80+3,40,47])dcjack();
         translate([ 75, -31,1.5])cylinder(h=53.5,d=7,$fn=50);
         translate([-75,  55,1.5])cylinder(h=53.5,d=7,$fn=50);
         translate([ 75,  55,1.5])cylinder(h=53.5,d=7,$fn=50);   
-        translate([-20,-14,47.5]){
+        /*translate([-20,-14,47.5]){
             translate([3.25+83,2.75,-0.5 ])cylinder(h=7,d=7,$fn=50);
             translate([3.25,2.75,-0.5 ])   cylinder(h=7,d=7,$fn=50);
             translate([3.2+83,2.75+64.875,-0.5 ])cylinder(h=7,d=7,$fn=50);
             translate([3.25,2.75+64.875,-0.5 ])  cylinder(h=7,d=7,$fn=50);
-            }
+            }// */
             translate([-76,-14,47.5]){
     translate([3.5,3.5,-0.5 ])          cylinder(h=7,d=7,$fn=50);
     translate([42.5-3.5,3.5,-0.5 ])     cylinder(h=7,d=7,$fn=50);
     translate([3.5,32.5-3.5,-0.5 ])     cylinder(h=7,d=7,$fn=50);
     translate([42.5-3.5,32.5-3.5,-0.5 ])cylinder(h=7,d=7,$fn=50);
-}
+}// */
     }
-    translate([-176,1,45-7.0])rotate(90,[0,1,0]) cylinder(d=16,h=200);
+    translate([-176,1,45-7.0])rotate(90,[0,1,0]) cylinder(d=15,h=200);
     translate([-176,45,15])rotate(90,[0,1,0]) cylinder(d=10,h=200);
-    translate([-4,-14,30])cube([15,100,10]);
-    translate([-75, -31,0.5])cylinder(h=25,d1=4,d2=3.9,$fn=50);
-    translate([ 75, -31,0.5])cylinder(h=25,d1=4,d2=3.9,$fn=50);
-    translate([-75,  55,0.5])cylinder(h=25,d1=4,d2=3.9,$fn=50);
-    translate([ 75,  55,0.5])cylinder(h=25,d1=4,d2=3.9,$fn=50);   
-    translate([-20,-14,45.0]){
+    //translate([-4,-14,30])cube([15,100,10]);
+    color("red")translate([0,0,34])cube([100,15,10]);
+    translate([-75, -31,0.5])cylinder(h=35,d1=4,d2=3.9,$fn=50);
+    translate([ 75, -31,0.5])cylinder(h=35,d1=4,d2=3.9,$fn=50);
+    translate([-75,  55,0.5])cylinder(h=35,d1=4,d2=3.9,$fn=50);
+    translate([ 75,  55,0.5])cylinder(h=35,d1=4,d2=3.9,$fn=50);   
+    translate([-75, -31,0.5])cylinder(h=15,d=4.2,$fn=50);
+    translate([ 75, -31,0.5])cylinder(h=15,d=4.2,$fn=50);
+    translate([-75,  55,0.5])cylinder(h=15,d=4.2,$fn=50);
+    translate([ 75,  55,0.5])cylinder(h=15,d=4.2,$fn=50);   
+    /*translate([-20,-14,45.0]){
         translate([3.25+83,2.75,-0.5 ])cylinder(h=9,d=2.97,$fn=50);
         translate([3.25,2.75,-0.5 ])cylinder(h=9,d=2.97,$fn=50);
         translate([3.2+83,2.75+64.875,-0.5 ])cylinder(h=9,d=2.97,$fn=50);
         translate([3.25,2.75+64.875,-0.5 ])cylinder(h=9,d=2.75,$fn=50);
-        }
+        }// */
     translate([-76,-14,45.0]){
     translate([3.5,3.5,-0.5 ])          cylinder(h=9,d=2.97,$fn=50);
     translate([42.5-3.5,3.5,-0.5 ])     cylinder(h=9,d=2.97,$fn=50);
     translate([3.5,32.5-3.5,-0.5 ])     cylinder(h=9,d=2.97,$fn=50);
     translate([42.5-3.5,32.5-3.5,-0.5 ])cylinder(h=9,d=2.97,$fn=50);
 }
+
+
 fudge = 1/cos(180/6);
+color("red")
+translate([40,0,25])
+rotate(90,[1,0,0])cylinder(d=14*fudge,h=34,$fn=6);
+
 color("red")
 translate([-20,0,25])
 rotate(90,[1,0,0])cylinder(d=14*fudge,h=34,$fn=6);
@@ -143,6 +154,8 @@ color("red")
 translate([10,0,25])
 rotate(90,[1,0,0])cylinder(d=11*fudge1,h=34.5,$fn=60);
 
+translate([40,0,25])
+rotate(90,[1,0,0])cylinder(d=12*fudge1,h=54,$fn=60);
 translate([-20,0,25])
 rotate(90,[1,0,0])cylinder(d=12*fudge1,h=54,$fn=60);
 translate([-50,0,25])
@@ -151,3 +164,7 @@ translate([10,0,25])
 rotate(90,[1,0,0])cylinder(d=6*fudge1,h=54,$fn=60);
 translate([-90,40,47])rotate(90,[0,1,0])cylinder(d=6,h=20);
 }
+
+
+
+
