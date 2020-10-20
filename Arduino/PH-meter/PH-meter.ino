@@ -116,6 +116,18 @@ void regression(bool store){
   lcd.print(achsenabschnitt,3);  
   lcd.setCursor(0, 3);  
   lcd.print("[OK]");
+#ifdef DEBUG  
+  Serial.print("X-PH4: ");Serial.println(xph4);
+  Serial.print("X-PH7: ");Serial.println(xph7);
+  Serial.print("X-PH9: ");Serial.println(xph9);
+  Serial.print("Y-PH4: ");Serial.println(yph4);
+  Serial.print("Y-PH7: ");Serial.println(yph7);
+  Serial.print("Y-PH9: ");Serial.println(yph9);
+  Serial.println("m * x + b ="); 
+  Serial.print(steigung,3);
+  Serial.print(" * x + ");
+  Serial.print(achsenabschnitt,3);
+#endif
   while ((!yes)&&(store)) {
     delay(10);  
     okButton.tick();
@@ -249,6 +261,11 @@ void sampling(){
   else{    
     analogValBuf[actualIdx] = analogRead(PH_SENSOR_PIN);
     getFloatingAvg();
+#ifdef DEBUG  
+for (int i=0; i<AVG_ARRAY_SIZE; i++){
+  Serial.print((i==actualIdx)?"pH->>>>: ":"pH-Read: "); Serial.print(i);  Serial.print(" ");  Serial.println(analogValBuf[i]);
+}
+#endif
     actualIdx++;
     actualIdx%=AVG_ARRAY_SIZE;
   }
@@ -449,6 +466,10 @@ void loop() {
     if (info) {
       lcd.print(avgValue);
       lcd.print(F(" "));
+      lcd.setCursor(18, 1);
+      lcd.print(F("  "));
+      lcd.setCursor(18, 1);
+      lcd.print(actualIdx,HEX);
       lcd.setCursor(0, 1);
       lcd.print((R1 > 1000) ? ((R1 > 1000000) ? 0.000001 * R1 : 0.001 * R1) : R1, 1);
       lcd.print((R1 > 1000) ? ((R1 > 1000000) ? "M" : "k") : "");  
@@ -470,7 +491,7 @@ void loop() {
     lcd.print("C");  
     lcd.print("   ");
     if (!measureEC){
-      if ((blowFish)||(fanspeed!=0)) mimapause=0;
+      if ((blowFish)&&(fanspeed!=0)) mimapause=0;
       if ((mimapause>AVG_ARRAY_SIZE)&&((!blowFish)||(fanspeed==0))){
       pHmin=min(pHmin,phValue);
       pHmax=max(pHmax,phValue);
